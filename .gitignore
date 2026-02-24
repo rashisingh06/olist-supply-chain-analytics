@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# Data files
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# dbt artifacts
+dbt/**/target/
+dbt/**/logs/
+dbt/**/dbt_packages/
+
+# OS files
+.DS_Store
+Thumbs.db
