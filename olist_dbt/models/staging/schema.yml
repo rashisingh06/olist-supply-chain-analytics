@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Cleaned staging model for OLIST orders data.
+    columns:
+      - name: order_id
+        description: Primary key for the order.
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: Customer identifier.
+
+      - name: order_status
+        description: Raw order status from source.
+
+      - name: order_purchase_timestamp
+        description: Timestamp when the order was placed.
+
+      - name: order_approved_timestamp
+        description: Timestamp when the order was approved.
+
+      - name: order_delivered_carrier_timestamp
+        description: Timestamp when the order was handed to carrier.
+
+      - name: order_delivered_customer_timestamp
+        description: Timestamp when the order was delivered to customer.
+
+      - name: order_estimated_delivery_timestamp
+        description: Estimated delivery timestamp.
+        
+  - name: stg_order_items
+    description: Cleaned staging model for OLIST order items.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: product_id
+      - name: seller_id
+
+  - name: stg_customers
+    description: Cleaned staging model for OLIST customers.
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_sellers
+    description: Cleaned staging model for OLIST sellers.
+    columns:
+      - name: seller_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_products
+    description: Cleaned staging model for OLIST products.
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_order_payments
+    description: Cleaned staging model for OLIST order payments.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+
+  - name: stg_product_category_translation
+    description: Translation table for product categories.
+    columns:
+      - name: product_category_name
+        tests:
+          - not_null
