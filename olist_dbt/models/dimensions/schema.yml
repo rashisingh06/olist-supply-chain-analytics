@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: dim_product
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_seller
+    columns:
+      - name: seller_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_customer_location
+    columns:
+      - name: customer_location_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests:
+          - not_null
+          - unique
