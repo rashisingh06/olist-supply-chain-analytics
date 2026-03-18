@@ -3,12 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 import snowflake.connector
+from snowflake.connector.pandas_tools import write_pandas
 from dotenv import load_dotenv
 
-
-# -----------------------------
-# Load environment variables
-# -----------------------------
 load_dotenv()
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
@@ -19,10 +16,6 @@ SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE")
 SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE", "OLIST_DB")
 SNOWFLAKE_SCHEMA = os.getenv("SNOWFLAKE_SCHEMA", "RAW")
 
-
-# -----------------------------
-# File paths
-# -----------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 
@@ -38,9 +31,6 @@ FILES_TO_LOAD = {
 }
 
 
-# -----------------------------
-# Snowflake connection
-# -----------------------------
 def get_snowflake_connection():
     return snowflake.connector.connect(
         account=SNOWFLAKE_ACCOUNT,
@@ -53,16 +43,11 @@ def get_snowflake_connection():
     )
 
 
-# -----------------------------
-# Utility functions
-# -----------------------------
 def check_raw_files_exist():
-    missing_files = []
-    for filename in FILES_TO_LOAD:
-        filepath = RAW_DATA_DIR / filename
-        if not filepath.exists():
-            missing_files.append(filename)
-
+    missing_files = [
+        filename for filename in FILES_TO_LOAD
+        if not (RAW_DATA_DIR / filename).exists()
+    ]
     if missing_files:
         raise FileNotFoundError(
             f"Missing raw files in {RAW_DATA_DIR}:\n" + "\n".join(missing_files)
@@ -77,21 +62,30 @@ def preview_file_shapes():
         print(f"{filename}: {df.shape[0]} rows, {df.shape[1]} columns")
 
 
-# -----------------------------
-# Placeholder load logic
-# -----------------------------
-def load_csv_to_snowflake(cursor, filepath: Path, table_name: str):
-    """
-    Placeholder:
-    Later this function will upload the file to Snowflake stage
-    and execute COPY INTO for the target RAW table.
-    """
-    print(f"[TODO] Load {filepath.name} into {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{table_name}")
+def load_csv_to_snowflake(conn, filepath: Path, table_name: str):
+    print(f"Loading {filepath.name} -> {table_name}")
+
+    df = pd.read_csv(filepath)
+
+    # normalize column names
+    df.columns = [col.upper() for col in df.columns]
+
+    success, nchunks, nrows, _ = write_pandas(
+        conn,
+        df,
+        table_name,
+        database=SNOWFLAKE_DATABASE,
+        schema=SNOWFLAKE_SCHEMA,
+        auto_create_table=False,
+        overwrite=True,
+    )
+
+    if success:
+        print(f"Loaded {nrows} rows into {table_name}")
+    else:
+        raise RuntimeError(f"Failed to load {filepath.name} into {table_name}")
 
 
-# -----------------------------
-# Main pipeline
-# -----------------------------
 def main():
     print("Starting OLIST ingestion pipeline...")
 
@@ -99,25 +93,21 @@ def main():
     preview_file_shapes()
 
     conn = None
-    cursor = None
 
     try:
         conn = get_snowflake_connection()
-        cursor = conn.cursor()
 
         for filename, table_name in FILES_TO_LOAD.items():
             filepath = RAW_DATA_DIR / filename
-            load_csv_to_snowflake(cursor, filepath, table_name)
+            load_csv_to_snowflake(conn, filepath, table_name)
 
-        print("\nIngestion pipeline completed (skeleton mode).")
+        print("\nIngestion pipeline completed successfully.")
 
     except Exception as e:
         print(f"\nError during ingestion: {e}")
         raise
 
     finally:
-        if cursor:
-            cursor.close()
         if conn:
             conn.close()
 
