@@ -1,82 +1,118 @@
 # OLIST Order-to-Delivery Fulfillment Analytics
 
 ## 📌 Project Overview
+This project builds an end-to-end analytics engineering pipeline to model the full order-to-delivery lifecycle using real transactional supply chain data (OLIST dataset).
 
-This project models the full order-to-delivery lifecycle using real transactional supply chain data (OLIST dataset).  
-
-The goal is to design an analytics engineering pipeline that measures fulfillment performance, lead time variability, and SLA adherence across sellers, regions, and product categories.
+The focus is on designing a robust data model and transformation layer that enables consistent, scalable measurement of fulfillment performance, lead time variability, and SLA adherence across sellers and regions.
 
 ---
 
 ## 🧱 Architecture
-
 Python (Ingestion) → Snowflake (Warehouse) → dbt (Transformations) → Power BI (Dashboard)
+
+Key principles:
+- ELT-based pipeline (load first, transform in warehouse)
+- Separation of transformation and reporting layers
+- Modular and reusable data modeling using dbt
 
 ---
 
 ## 🎯 Use Case
+Supply chain and operations teams require visibility into:
 
-Supply chain and operations teams need visibility into:
-
-- How long orders take from purchase to delivery
-- Where delays occur (approval, shipping, final delivery)
+- End-to-end order fulfillment timelines
+- Where delays occur (approval, shipping, delivery)
 - Which sellers or regions underperform
-- On-time delivery rate trends
+- On-time delivery rates and SLA adherence
 
-This project builds a dimensional model to answer those questions at the **order-item grain**.
+This project enables these analyses through a structured dimensional model at the order-item level.
 
 ---
 
-## 📊 Grain
-
-**Fact Table Grain:**  
-`order_id + order_item_number`  
-(One row per order item representing the latest known fulfillment state)
+## 📊 Data Grain
+**Fact Table Grain:**
+- order_id + order_item_number
+Each row represents a single order item and its fulfillment lifecycle.
 
 ---
 
 ## 📐 Data Model
 
-The dimensional model includes:
+### Dimensions
+- dim_date  
+- dim_product  
+- dim_seller  
+- dim_customer_location  
 
-- `dim_date`
-- `dim_product`
-- `dim_seller`
-- `dim_customer_location`
-- `fct_order_fulfillment`
+### Fact
+- fct_order_fulfillment  
 
-See ERD diagram in `/docs/schema/olist_erd.png`.
+### Marts
+- mart_delivery_sla  
+- mart_seller_performance  
+- mart_regional_delays  
+
+The model is designed to ensure consistent metric definitions and support flexible downstream analysis.
+
+ERD available at:  
+`/docs/schema/olist_erd.png`
 
 ---
 
-## 📏 Core KPIs
+## ⚙️ dbt Implementation
+The transformation layer is built using dbt with:
 
-- Total Lead Time (purchase → delivery)
-- Approval Duration
-- Shipping Duration
-- Delivery Delay (actual vs estimated)
-- On-Time Delivery Rate
-- Seller Performance Ranking
-- Regional Delay Analysis
+- Staging models for data cleaning and standardization  
+- Dimension and fact modeling following star schema principles  
+- Analytical marts for business-facing metrics  
+
+### Testing
+Includes both standard and custom tests:
+- Not null and uniqueness constraints  
+- SLA consistency validation  
+- Delivered orders must have delivery dates  
+
+Some tests are intentionally designed to fail to highlight real data quality issues and edge cases.
+
+---
+
+## 📏 Core Metrics
+All key metrics are defined within the transformation layer to ensure consistency across reporting:
+
+- Total Lead Time (purchase → delivery)  
+- Approval Duration  
+- Shipping Duration  
+- Delivery Delay (actual vs estimated)  
+- On-Time Delivery Rate  
+- Lead Time Gap (Late vs On-Time)  
+- Revenue at Risk from delayed sellers  
+
+---
+
+## 📊 Analytics Focus
+The project enables analysis across multiple dimensions:
+
+- Seller performance and delay patterns  
+- Regional delay concentration  
+- SLA adherence and fulfillment reliability  
+- Identification of high-risk sellers (high delay + high volume/revenue)  
 
 ---
 
 ## ⚙️ Tech Stack
-
-- Snowflake
-- dbt
-- Python (snowflake-connector, pandas)
-- Power BI
+- Python (pandas, snowflake-connector)  
+- Snowflake  
+- dbt  
+- Power BI  
 
 ---
 
 ## 🚀 Status
-
-- [x] Project structure created
-- [x] ERD designed
-- [ ] Snowflake warehouse setup
-- [ ] Data ingestion pipeline
-- [ ] dbt staging models
-- [ ] Fact + dimension models
-- [ ] Analytics marts
-- [ ] Power BI dashboard
+- Project structure created  
+- ERD designed  
+- Snowflake warehouse setup  
+- Data ingestion pipeline  
+- dbt staging models  
+- Dimension and fact models  
+- Analytics marts  
+- Power BI dashboard  
